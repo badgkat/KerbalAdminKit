@@ -1,4 +1,5 @@
 using UnityEngine;
+using ClickThroughFix;
 using KerbalDialogueKit.Core;
 using KerbalAdminKit.Characters;
 
@@ -31,8 +32,8 @@ namespace KerbalAdminKit.Focuses
         public void OnGUI()
         {
             if (target == null) return;
-            window = GUILayout.Window(
-                WindowId, window, DrawWindow, $"Focus: {target.DisplayName}");
+            window = ClickThruBlocker.GUILayoutWindow(
+                WindowId, window, DrawWindow, $"Focus: {target.DisplayName}", GUI.skin.window);
         }
 
         private void DrawWindow(int id)
