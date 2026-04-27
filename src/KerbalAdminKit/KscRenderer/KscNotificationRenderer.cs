@@ -6,31 +6,31 @@ using KerbalCampaignKit.Core;
 namespace KerbalAdminKit.KscRenderer
 {
     /// <summary>
-    /// Draws notification markers over KSC buildings in OnGUI. Markers pull
-    /// their textures/colors from NotificationStyleRegistry; positions from
-    /// each SpaceCenterBuilding transform via Camera.main.WorldToScreenPoint.
-    /// SpaceCenterBuilding lookup is cached on first scene tick; FindObjectsOfType
-    /// is too expensive to run in OnGUI per frame.
+    /// Draws notification markers over KSC buildings. Pulls textures and
+    /// colors from NotificationStyleRegistry and per-building offsets from
+    /// KscMarkerOffsetRegistry. Building transforms are resolved lazily by
+    /// scanning SpaceCenterBuilding objects in the scene (KSP 1.12 has no
+    /// SpaceCenter property accessor for individual facilities).
     /// </summary>
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     public sealed class KscNotificationRenderer : MonoBehaviour
     {
-        // (canonical facility key, notification target prefix, fragment that should appear in
-        // the SpaceCenterBuilding name to match it).
-        private static readonly (string facility, string prefix, string nameFragment)[] Buildings =
-        {
-            ("Administration",          "admin",     "Administration"),
-            ("MissionControl",          "mc",        "MissionControl"),
-            ("TrackingStation",         "tracking",  "TrackingStation"),
-            ("ResearchAndDevelopment",  "rd",        "ResearchAndDevelopment"),
-            ("VehicleAssemblyBuilding", "vab",       "VehicleAssemblyBuilding"),
-            ("SpaceplaneHangar",        "sph",       "SpaceplaneHangar"),
-            ("AstronautComplex",        "astronaut", "AstronautComplex"),
-        };
-
         private NotificationStyleRegistry styles;
         private KscMarkerOffsetRegistry offsets;
-        private Dictionary<string, Transform> facilityTransforms;
+
+        // Each entry: (logical facility key, notification prefix, name fragments to match SpaceCenterBuilding by)
+        private static readonly (string facility, string prefix, string[] nameFragments)[] Buildings = new[]
+        {
+            ("Administration",          "admin",     new[] { "Administration", "admin" }),
+            ("MissionControl",          "mc",        new[] { "MissionControl", "Mission Control" }),
+            ("TrackingStation",         "tracking",  new[] { "TrackingStation", "Tracking Station" }),
+            ("ResearchAndDevelopment",  "rd",        new[] { "ResearchAndDevelopment", "Research" }),
+            ("VehicleAssemblyBuilding", "vab",       new[] { "VehicleAssemblyBuilding", "VAB" }),
+            ("SpaceplaneHangar",        "sph",       new[] { "SpaceplaneHangar", "SPH" }),
+            ("AstronautComplex",        "astronaut", new[] { "AstronautComplex", "Astronaut" }),
+        };
+
+        private Dictionary<string, Transform> facilityCache;
 
         public void Initialize(NotificationStyleRegistry styles, KscMarkerOffsetRegistry offsets)
         {
@@ -45,9 +45,9 @@ namespace KerbalAdminKit.KscRenderer
 
             EnsureFacilityCache();
 
-            foreach (var b in Buildings)
+            foreach (var entry in Buildings)
             {
-                var severity = CampaignKit.Notifications?.Highest(b.prefix);
+                var severity = CampaignKit.Notifications?.Highest(entry.prefix);
                 if (!severity.HasValue) continue;
 
                 var style = styles.Get(severity.Value.ToString());
@@ -55,12 +55,12 @@ namespace KerbalAdminKit.KscRenderer
                 var tex = TextureLoader.Get(style.TextureUrl);
                 if (tex == null) continue;
 
-                if (!facilityTransforms.TryGetValue(b.facility, out var t) || t == null) continue;
+                if (!facilityCache.TryGetValue(entry.facility, out var transform) || transform == null) continue;
 
-                var screen = Camera.main.WorldToScreenPoint(t.position);
+                var screen = Camera.main.WorldToScreenPoint(transform.position);
                 if (screen.z < 0) continue;
 
-                var offset = offsets.Get(b.facility);
+                var offset = offsets.Get(entry.facility);
                 var pos = new Vector2(screen.x + offset.x, Screen.height - screen.y - offset.y);
 
                 var size = 32f * (style.Pulse ? (1f + 0.1f * Mathf.Sin(Time.time * 3f)) : 1f);
@@ -75,21 +75,31 @@ namespace KerbalAdminKit.KscRenderer
 
         private void EnsureFacilityCache()
         {
-            if (facilityTransforms != null) return;
-            facilityTransforms = new Dictionary<string, Transform>();
+            // Refresh when null OR when any cached transform was destroyed (scene reload).
+            if (facilityCache != null)
+            {
+                bool stale = false;
+                foreach (var kv in facilityCache) if (kv.Value == null) { stale = true; break; }
+                if (!stale) return;
+            }
 
+            facilityCache = new Dictionary<string, Transform>();
             var allBuildings = Object.FindObjectsOfType<SpaceCenterBuilding>();
             foreach (var b in allBuildings)
             {
                 if (b == null) continue;
                 var name = b.facilityName ?? b.gameObject?.name ?? "";
+
                 foreach (var entry in Buildings)
                 {
-                    if (facilityTransforms.ContainsKey(entry.facility)) continue;
-                    if (name.IndexOf(entry.nameFragment, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (facilityCache.ContainsKey(entry.facility)) continue;
+                    foreach (var frag in entry.nameFragments)
                     {
-                        facilityTransforms[entry.facility] = b.transform;
-                        break;
+                        if (name.IndexOf(frag, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            facilityCache[entry.facility] = b.transform;
+                            break;
+                        }
                     }
                 }
             }
