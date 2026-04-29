@@ -33,13 +33,31 @@ namespace KerbalAdminKit.Memos
                 bool.TryParse(node.GetValue("postToStockMail"), out var psm))
                 m.PostToStockMail = psm;
 
+            foreach (var c in BuildConditions(node))
+                m.Conditions.Add(c);
+
+            return m;
+        }
+
+        private static System.Collections.Generic.IEnumerable<IMemoCondition> BuildConditions(ISceneNode node)
+        {
+            foreach (var allNode in node.GetNodes("ALL"))
+            {
+                var c = new CompositeCondition { Mode = CompositeMode.All };
+                foreach (var child in BuildConditions(allNode)) c.Children.Add(child);
+                yield return c;
+            }
+            foreach (var anyNode in node.GetNodes("ANY"))
+            {
+                var c = new CompositeCondition { Mode = CompositeMode.Any };
+                foreach (var child in BuildConditions(anyNode)) c.Children.Add(child);
+                yield return c;
+            }
             foreach (var condNode in node.GetNodes("CONDITION"))
             {
                 var cond = MemoConditionFactory.Build(condNode);
-                if (cond != null) m.Conditions.Add(cond);
+                if (cond != null) yield return cond;
             }
-
-            return m;
         }
 
         private static MemoPriority ParsePriority(string s)

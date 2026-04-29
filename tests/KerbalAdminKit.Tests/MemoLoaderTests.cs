@@ -73,5 +73,64 @@ namespace KerbalAdminKit.Tests
             Assert.Single(m.Conditions);
             Assert.IsType<InChapterCondition>(m.Conditions[0]);
         }
+
+        [Fact]
+        public void Load_ParsesAllBlock()
+        {
+            var n = new FakeSceneNode().Set("id", "x").Set("text", "y");
+            var all = new FakeSceneNode();
+            all.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "FundsBelow").Set("threshold", "10000"));
+            all.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "ChapterAtLeast").Set("chapter", "1"));
+            n.AddChild("ALL", all);
+
+            var m = MemoLoader.Load(n);
+            Assert.Single(m.Conditions);
+            var composite = Assert.IsType<CompositeCondition>(m.Conditions[0]);
+            Assert.Equal(CompositeMode.All, composite.Mode);
+            Assert.Equal(2, composite.Children.Count);
+        }
+
+        [Fact]
+        public void Load_ParsesAnyBlock()
+        {
+            var n = new FakeSceneNode().Set("id", "x").Set("text", "y");
+            var any = new FakeSceneNode();
+            any.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "FundsBelow").Set("threshold", "10000"));
+            any.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "ReputationAbove").Set("threshold", "50"));
+            n.AddChild("ANY", any);
+
+            var m = MemoLoader.Load(n);
+            Assert.Single(m.Conditions);
+            var composite = Assert.IsType<CompositeCondition>(m.Conditions[0]);
+            Assert.Equal(CompositeMode.Any, composite.Mode);
+            Assert.Equal(2, composite.Children.Count);
+        }
+
+        [Fact]
+        public void Load_NestsCompositesRecursively()
+        {
+            var n = new FakeSceneNode().Set("id", "x").Set("text", "y");
+            var outer = new FakeSceneNode();
+            var inner = new FakeSceneNode();
+            inner.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "FundsBelow").Set("threshold", "10000"));
+            outer.AddChild("ANY", inner);
+            outer.AddChild("CONDITION", new FakeSceneNode()
+                .Set("type", "ChapterAtLeast").Set("chapter", "1"));
+            n.AddChild("ALL", outer);
+
+            var m = MemoLoader.Load(n);
+            Assert.Single(m.Conditions);
+            var topAll = Assert.IsType<CompositeCondition>(m.Conditions[0]);
+            Assert.Equal(CompositeMode.All, topAll.Mode);
+            Assert.Equal(2, topAll.Children.Count);
+
+            var nestedAny = Assert.IsType<CompositeCondition>(topAll.Children[0]);
+            Assert.Equal(CompositeMode.Any, nestedAny.Mode);
+        }
     }
 }
