@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using ClickThroughFix;
 using KerbalAdminKit.Memos;
@@ -15,7 +16,21 @@ namespace KerbalAdminKit.Admin
         private Rect prConfirmRect = new Rect(Screen.width / 2 - 200, Screen.height / 2 - 100, 400, 200);
         private const int PrConfirmWindowId = 0x4B41_4B02;
 
+        // High-priority memos require a second click to confirm dismissal so
+        // the player doesn't blow past something the program lead flagged.
+        private readonly HashSet<string> dismissArmed = new HashSet<string>();
+
         private static Texture2D opaqueBg;
+
+        /// <summary>
+        /// Called when the admin window closes so confirmation arming
+        /// doesn't persist across separate visits.
+        /// </summary>
+        public void Reset()
+        {
+            dismissArmed.Clear();
+            confirmingPr = false;
+        }
 
         public DeskPanel(MemoRegistry memos, AdminKitSettings settings, PrCampaignConfig prConfig)
         {
@@ -43,7 +58,16 @@ namespace KerbalAdminKit.Admin
         /// </summary>
         public void OnGUI()
         {
-            if (confirmingPr) DrawPrConfirm();
+            if (!confirmingPr) return;
+
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                confirmingPr = false;
+                Event.current.Use();
+                return;
+            }
+
+            DrawPrConfirm();
         }
 
         private void DrawMemos()
@@ -54,16 +78,40 @@ namespace KerbalAdminKit.Admin
             {
                 if (shown >= settings.DeskMemoCount) break;
                 GUILayout.BeginVertical(GUI.skin.box);
+
+                var prefix = m.Priority == MemoPriority.High ? "<color=#ff8080>!</color> " : "";
                 if (!string.IsNullOrEmpty(m.CharacterId))
-                    GUILayout.Label($"<b>{m.CharacterId}:</b>");
+                    GUILayout.Label($"{prefix}<b>{m.CharacterId}:</b>");
+                else if (!string.IsNullOrEmpty(prefix))
+                    GUILayout.Label(prefix.TrimEnd());
                 GUILayout.Label(m.Text ?? "");
-                if (GUILayout.Button("Dismiss"))
-                    memos.Dismiss(m.Id, Planetarium.GetUniversalTime());
+
+                var isHigh = m.Priority == MemoPriority.High;
+                var armed = dismissArmed.Contains(m.Id);
+                string label;
+                if (isHigh && !armed) label = "Dismiss…";
+                else if (isHigh && armed) label = "Confirm dismiss";
+                else label = "Dismiss";
+
+                if (GUILayout.Button(label))
+                {
+                    if (isHigh && !armed)
+                    {
+                        dismissArmed.Add(m.Id);
+                    }
+                    else
+                    {
+                        memos.Dismiss(m.Id, Planetarium.GetUniversalTime());
+                        dismissArmed.Remove(m.Id);
+                    }
+                }
+
                 GUILayout.EndVertical();
                 GUILayout.Space(4);
                 shown++;
             }
-            if (shown == 0) GUILayout.Label("— no memos —");
+            if (shown == 0)
+                GUILayout.Label("<i>Inbox is clear.</i>");
         }
 
         private void DrawPrButton()
@@ -73,14 +121,18 @@ namespace KerbalAdminKit.Admin
             var tier = CurrentTierIndex();
             var cost = prConfig.ComputeCost(tier);
             var canAfford = PrCampaignAction.CanAfford(prConfig, tier);
+            var cooldownDays = PrCampaignAction.CooldownRemainingDays(prConfig);
+            var available = canAfford && cooldownDays <= 0;
 
-            GUI.enabled = canAfford;
+            GUI.enabled = available;
             if (GUILayout.Button($"PR Campaign ({(int)cost} funds)"))
                 confirmingPr = true;
             GUI.enabled = true;
 
             if (!canAfford)
                 GUILayout.Label("<i>Not enough funds.</i>");
+            else if (cooldownDays > 0)
+                GUILayout.Label($"<i>On cooldown for {(int)System.Math.Ceiling(cooldownDays)} more days.</i>");
         }
 
         private void DrawPrConfirm()
@@ -98,14 +150,21 @@ namespace KerbalAdminKit.Admin
             var tier = CurrentTierIndex();
             var cost = prConfig.ComputeCost(tier);
             var canAfford = PrCampaignAction.CanAfford(prConfig, tier);
+            var cooldownDays = PrCampaignAction.CooldownRemainingDays(prConfig);
+            var available = canAfford && cooldownDays <= 0;
 
             GUILayout.Label($"Run a PR campaign for {(int)cost} funds?");
             GUILayout.Label($"+{(int)prConfig.RepBonus} reputation, halt decay {(int)prConfig.HaltDecayDays} days.");
+            if (prConfig.CooldownDays > 0)
+                GUILayout.Label($"Cooldown: {(int)prConfig.CooldownDays} days before another campaign.");
+
             if (!canAfford)
                 GUILayout.Label("<color=#ff8080><i>Not enough funds.</i></color>");
+            else if (cooldownDays > 0)
+                GUILayout.Label($"<color=#ff8080><i>On cooldown for {(int)System.Math.Ceiling(cooldownDays)} more days.</i></color>");
 
             GUILayout.BeginHorizontal();
-            GUI.enabled = canAfford;
+            GUI.enabled = available;
             if (GUILayout.Button("Confirm"))
             {
                 if (PrCampaignAction.Execute(prConfig, tier))

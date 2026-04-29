@@ -84,7 +84,7 @@ namespace KerbalAdminKit.Admin
                     any = true;
                 }
             }
-            if (!any) GUILayout.Label("— none —");
+            if (!any) GUILayout.Label("<i>No focuses set. Click a character chip to assign one.</i>");
         }
     }
 }

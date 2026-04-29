@@ -51,7 +51,14 @@ namespace KerbalAdminKit.Admin
             window = new Rect((Screen.width - w) / 2, (Screen.height - h) / 2, w, h);
         }
 
-        public void Hide() => visible = false;
+        public void Hide()
+        {
+            visible = false;
+            // Reset transient confirm-arming state so dismissing a high-priority
+            // memo always requires two clicks per visit.
+            deskPanel?.Reset();
+            focusPicker?.Close();
+        }
 
         private void OnGUI()
         {
@@ -67,8 +74,16 @@ namespace KerbalAdminKit.Admin
 
             // Modals must be opened from OnGUI, not from inside another window's
             // draw callback. Render any open modals here, after the main window.
+            // Modals consume Esc first; if no modal claimed it, Esc closes the
+            // admin window itself.
             focusPicker?.OnGUI();
             deskPanel?.OnGUI();
+
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                Hide();
+                Event.current.Use();
+            }
         }
 
         private void DrawWindow(int id)

@@ -34,6 +34,15 @@ namespace KerbalAdminKit.Focuses
         public void OnGUI()
         {
             if (target == null) return;
+
+            // Esc cancels the modal.
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                Close();
+                Event.current.Use();
+                return;
+            }
+
             window = ClickThruBlocker.GUILayoutWindow(
                 WindowId, window, DrawWindow, $"Focus: {target.DisplayName}", GUI.skin.window);
             // Keep the modal above the parent admin window every frame, otherwise
@@ -48,14 +57,30 @@ namespace KerbalAdminKit.Focuses
             var fill = new Rect(0, 0, window.width, window.height);
             GUI.DrawTexture(fill, OpaqueBackground());
 
+            // Read the character's currently-active focus value (if any) so we
+            // can mark the matching option in the list.
+            string activeValue = null;
+            if (DialogueKit.Flags != null)
+            {
+                var focusFlag = focuses.GetForCharacter(target.Id);
+                foreach (var f in focusFlag)
+                {
+                    if (string.IsNullOrEmpty(f.Flag)) continue;
+                    var v = DialogueKit.Flags.Get(f.Flag);
+                    if (!string.IsNullOrEmpty(v)) { activeValue = v; break; }
+                }
+            }
+
             scroll = GUILayout.BeginScrollView(scroll);
             foreach (var focus in focuses.GetValidFor(target.Id))
             {
+                var isActive = focus.FlagValue == activeValue;
                 GUILayout.BeginVertical(GUI.skin.box);
-                GUILayout.Label($"<b>{focus.Title}</b>");
+                var titleLabel = isActive ? $"<b>{focus.Title}</b>  <i>(active)</i>" : $"<b>{focus.Title}</b>";
+                GUILayout.Label(titleLabel);
                 if (!string.IsNullOrEmpty(focus.Description))
                     GUILayout.Label(focus.Description);
-                if (GUILayout.Button("Select"))
+                if (GUILayout.Button(isActive ? "Selected" : "Select"))
                 {
                     DialogueKit.Flags?.Set(focus.Flag ?? "", focus.FlagValue ?? "");
                     Close();
