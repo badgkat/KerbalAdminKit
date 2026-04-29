@@ -15,6 +15,8 @@ namespace KerbalAdminKit.Admin
         private Rect prConfirmRect = new Rect(Screen.width / 2 - 200, Screen.height / 2 - 100, 400, 200);
         private const int PrConfirmWindowId = 0x4B41_4B02;
 
+        private static Texture2D opaqueBg;
+
         public DeskPanel(MemoRegistry memos, AdminKitSettings settings, PrCampaignConfig prConfig)
         {
             this.memos = memos;
@@ -77,10 +79,14 @@ namespace KerbalAdminKit.Admin
         {
             prConfirmRect = ClickThruBlocker.GUILayoutWindow(
                 PrConfirmWindowId, prConfirmRect, DrawPrConfirmContents, "PR Campaign", GUI.skin.window);
+            GUI.BringWindowToFront(PrConfirmWindowId);
         }
 
         private void DrawPrConfirmContents(int id)
         {
+            var fill = new Rect(0, 0, prConfirmRect.width, prConfirmRect.height);
+            GUI.DrawTexture(fill, OpaqueBackground());
+
             var cost = prConfig.ComputeCost(CurrentTierIndex());
             GUILayout.Label($"Run a PR campaign for {(int)cost} funds?");
             GUILayout.Label($"+{(int)prConfig.RepBonus} reputation, halt decay {(int)prConfig.HaltDecayDays} days.");
@@ -93,6 +99,17 @@ namespace KerbalAdminKit.Admin
             if (GUILayout.Button("Cancel")) confirmingPr = false;
             GUILayout.EndHorizontal();
             GUI.DragWindow();
+        }
+
+        private static Texture2D OpaqueBackground()
+        {
+            if (opaqueBg == null)
+            {
+                opaqueBg = new Texture2D(1, 1);
+                opaqueBg.SetPixel(0, 0, new Color(0.10f, 0.10f, 0.12f, 1f));
+                opaqueBg.Apply();
+            }
+            return opaqueBg;
         }
 
         private int CurrentTierIndex()

@@ -18,6 +18,8 @@ namespace KerbalAdminKit.Focuses
         private Vector2 scroll;
         private const int WindowId = 0x4B41_4B01;
 
+        private static Texture2D opaqueBg;
+
         public bool IsOpen => target != null;
 
         public FocusPicker(FocusRegistry focuses, CharacterRegistry characters)
@@ -34,10 +36,18 @@ namespace KerbalAdminKit.Focuses
             if (target == null) return;
             window = ClickThruBlocker.GUILayoutWindow(
                 WindowId, window, DrawWindow, $"Focus: {target.DisplayName}", GUI.skin.window);
+            // Keep the modal above the parent admin window every frame, otherwise
+            // KSP's window stack can bury it once focus shifts to the parent.
+            GUI.BringWindowToFront(WindowId);
         }
 
         private void DrawWindow(int id)
         {
+            // Paint an opaque background so labels don't bleed through the
+            // semi-transparent skin window onto the admin panel beneath.
+            var fill = new Rect(0, 0, window.width, window.height);
+            GUI.DrawTexture(fill, OpaqueBackground());
+
             scroll = GUILayout.BeginScrollView(scroll);
             foreach (var focus in focuses.GetValidFor(target.Id))
             {
@@ -56,6 +66,17 @@ namespace KerbalAdminKit.Focuses
 
             if (GUILayout.Button("Cancel")) Close();
             GUI.DragWindow();
+        }
+
+        private static Texture2D OpaqueBackground()
+        {
+            if (opaqueBg == null)
+            {
+                opaqueBg = new Texture2D(1, 1);
+                opaqueBg.SetPixel(0, 0, new Color(0.10f, 0.10f, 0.12f, 1f));
+                opaqueBg.Apply();
+            }
+            return opaqueBg;
         }
     }
 }
