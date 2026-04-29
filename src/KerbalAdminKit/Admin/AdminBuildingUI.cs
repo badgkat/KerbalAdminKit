@@ -65,7 +65,10 @@ namespace KerbalAdminKit.Admin
             window = ClickThruBlocker.GUIWindow(
                 WindowId, window, DrawWindow, "Administration", GUI.skin.window);
 
+            // Modals must be opened from OnGUI, not from inside another window's
+            // draw callback. Render any open modals here, after the main window.
             focusPicker?.OnGUI();
+            deskPanel?.OnGUI();
         }
 
         private void DrawWindow(int id)

@@ -32,7 +32,15 @@ namespace KerbalAdminKit.Admin
 
             GUILayout.EndScrollView();
             GUILayout.EndArea();
+        }
 
+        /// <summary>
+        /// Renders the PR-campaign confirmation modal. Must be called from
+        /// the host's OnGUI AFTER the main window draw — IMGUI doesn't allow
+        /// top-level windows to be opened from inside another window's callback.
+        /// </summary>
+        public void OnGUI()
+        {
             if (confirmingPr) DrawPrConfirm();
         }
 
