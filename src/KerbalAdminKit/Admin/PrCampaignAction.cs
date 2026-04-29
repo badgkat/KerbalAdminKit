@@ -31,13 +31,23 @@ namespace KerbalAdminKit.Admin
 
     public static class PrCampaignAction
     {
-        /// <summary>
-        /// Applies the PR campaign: deducts funds, adds rep, halts decay,
-        /// records lastUsedTime in the AdminKit scenario.
-        /// </summary>
-        public static void Execute(PrCampaignConfig cfg, int currentTierIndex)
+        public static bool CanAfford(PrCampaignConfig cfg, int currentTierIndex)
         {
-            if (cfg == null) return;
+            if (cfg == null) return false;
+            var cost = cfg.ComputeCost(currentTierIndex);
+            var funds = Funding.Instance != null ? Funding.Instance.Funds : 0;
+            return funds >= cost;
+        }
+
+        /// <summary>
+        /// Applies the PR campaign: deducts funds, adds rep, halts decay, records
+        /// lastUsedTime. Returns false (and does nothing) if funds are insufficient.
+        /// </summary>
+        public static bool Execute(PrCampaignConfig cfg, int currentTierIndex)
+        {
+            if (cfg == null) return false;
+            if (!CanAfford(cfg, currentTierIndex)) return false;
+
             var cost = cfg.ComputeCost(currentTierIndex);
             Funding.Instance?.AddFunds(-cost, TransactionReasons.Strategies);
             global::Reputation.Instance?.AddReputation((float)cfg.RepBonus, TransactionReasons.Strategies);
@@ -45,6 +55,8 @@ namespace KerbalAdminKit.Admin
 
             if (AdminKitScenario.Instance != null)
                 AdminKitScenario.Instance.PrCampaignLastUsedTime = Planetarium.GetUniversalTime();
+
+            return true;
         }
     }
 }

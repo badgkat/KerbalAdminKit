@@ -70,9 +70,17 @@ namespace KerbalAdminKit.Admin
         {
             if (prConfig == null) return;
             GUILayout.Space(12);
-            var cost = prConfig.ComputeCost(CurrentTierIndex());
+            var tier = CurrentTierIndex();
+            var cost = prConfig.ComputeCost(tier);
+            var canAfford = PrCampaignAction.CanAfford(prConfig, tier);
+
+            GUI.enabled = canAfford;
             if (GUILayout.Button($"PR Campaign ({(int)cost} funds)"))
                 confirmingPr = true;
+            GUI.enabled = true;
+
+            if (!canAfford)
+                GUILayout.Label("<i>Not enough funds.</i>");
         }
 
         private void DrawPrConfirm()
@@ -87,15 +95,23 @@ namespace KerbalAdminKit.Admin
             var fill = new Rect(0, 0, prConfirmRect.width, prConfirmRect.height);
             GUI.DrawTexture(fill, OpaqueBackground());
 
-            var cost = prConfig.ComputeCost(CurrentTierIndex());
+            var tier = CurrentTierIndex();
+            var cost = prConfig.ComputeCost(tier);
+            var canAfford = PrCampaignAction.CanAfford(prConfig, tier);
+
             GUILayout.Label($"Run a PR campaign for {(int)cost} funds?");
             GUILayout.Label($"+{(int)prConfig.RepBonus} reputation, halt decay {(int)prConfig.HaltDecayDays} days.");
+            if (!canAfford)
+                GUILayout.Label("<color=#ff8080><i>Not enough funds.</i></color>");
+
             GUILayout.BeginHorizontal();
+            GUI.enabled = canAfford;
             if (GUILayout.Button("Confirm"))
             {
-                PrCampaignAction.Execute(prConfig, CurrentTierIndex());
-                confirmingPr = false;
+                if (PrCampaignAction.Execute(prConfig, tier))
+                    confirmingPr = false;
             }
+            GUI.enabled = true;
             if (GUILayout.Button("Cancel")) confirmingPr = false;
             GUILayout.EndHorizontal();
             GUI.DragWindow();
