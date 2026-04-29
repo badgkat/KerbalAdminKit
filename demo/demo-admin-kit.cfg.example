@@ -1,7 +1,9 @@
 // KerbalAdminKit demo content.
-// Move this file to GameData/KerbalAdminKit/demo-admin-kit.cfg (or anywhere
-// under GameData/) to exercise the full feature set without a content mod.
-// Remove it to make KAK fall inert again.
+//
+// This file uses the .example extension so KSP does NOT auto-load it.
+// To activate: copy it up one level and drop the .example extension:
+//   cp demo/demo-admin-kit.cfg.example ../demo-admin-kit.cfg
+// To deactivate: delete or rename the copy at the mod root.
 
 KERBAL_ADMIN_KIT
 {
