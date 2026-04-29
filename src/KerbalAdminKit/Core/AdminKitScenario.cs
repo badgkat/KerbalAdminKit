@@ -11,6 +11,9 @@ namespace KerbalAdminKit
 
         public Dictionary<string, double> DismissedMemos = new Dictionary<string, double>();
         public HashSet<string> StockMailedMemos = new HashSet<string>();
+        // Memos dismissed but not SuppressAfterDismiss: held silent until their
+        // condition transitions to false at least once, then they may re-fire.
+        public HashSet<string> RearmPendingMemos = new HashSet<string>();
         public double PrCampaignLastUsedTime;
 
         public override void OnAwake()
@@ -38,6 +41,13 @@ namespace KerbalAdminKit
                 m.AddValue("id", id);
             }
 
+            var rearm = node.AddNode("REARM_PENDING_MEMOS");
+            foreach (var id in RearmPendingMemos)
+            {
+                var m = rearm.AddNode("MEMO");
+                m.AddValue("id", id);
+            }
+
             var pr = node.AddNode("PR_CAMPAIGN");
             pr.AddValue("lastUsedTime", PrCampaignLastUsedTime);
         }
@@ -47,6 +57,7 @@ namespace KerbalAdminKit
             base.OnLoad(node);
             DismissedMemos.Clear();
             StockMailedMemos.Clear();
+            RearmPendingMemos.Clear();
             PrCampaignLastUsedTime = 0;
 
             if (node.HasNode("DISMISSED_MEMOS"))
@@ -66,6 +77,15 @@ namespace KerbalAdminKit
                 {
                     var id = m.GetValue("id");
                     if (!string.IsNullOrEmpty(id)) StockMailedMemos.Add(id);
+                }
+            }
+
+            if (node.HasNode("REARM_PENDING_MEMOS"))
+            {
+                foreach (var m in node.GetNode("REARM_PENDING_MEMOS").GetNodes("MEMO"))
+                {
+                    var id = m.GetValue("id");
+                    if (!string.IsNullOrEmpty(id)) RearmPendingMemos.Add(id);
                 }
             }
 

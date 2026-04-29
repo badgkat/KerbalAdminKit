@@ -23,15 +23,19 @@ namespace KerbalAdminKit.Memos
 
         /// <summary>
         /// Marks a memo dismissed and records dismissal time in AdminKitScenario.
-        /// SuppressAfterDismiss memos won't re-activate this save.
+        /// SuppressAfterDismiss memos won't re-activate this save. Otherwise the
+        /// memo enters rearm-pending: it stays silent until its condition goes
+        /// false at least once, then may fire again on the next true edge.
         /// </summary>
         public void Dismiss(string id, double nowSeconds)
         {
             var m = Get(id);
             if (m == null) return;
             m.IsActive = false;
-            if (AdminKitScenario.Instance != null)
-                AdminKitScenario.Instance.DismissedMemos[id] = nowSeconds;
+            if (AdminKitScenario.Instance == null) return;
+            AdminKitScenario.Instance.DismissedMemos[id] = nowSeconds;
+            if (!m.SuppressAfterDismiss)
+                AdminKitScenario.Instance.RearmPendingMemos.Add(id);
         }
     }
 }

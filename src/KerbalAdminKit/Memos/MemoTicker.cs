@@ -80,6 +80,18 @@ namespace KerbalAdminKit.Memos
                 }
             }
 
+            // Edge-triggered rearm: a non-suppress dismiss parks the memo in
+            // RearmPendingMemos. It stays silent until conditions go false at
+            // least once (the falling edge clears the pending flag), then may
+            // re-fire on the next true edge.
+            if (AdminKitScenario.Instance != null &&
+                AdminKitScenario.Instance.RearmPendingMemos.Contains(memo.Id))
+            {
+                if (!allPass)
+                    AdminKitScenario.Instance.RearmPendingMemos.Remove(memo.Id);
+                return;
+            }
+
             if (allPass && !memo.IsActive)
             {
                 memo.IsActive = true;
