@@ -23,7 +23,5 @@ namespace KerbalAdminKit.Util
                 Debug.LogWarning($"[KerbalAdminKit] Texture not found: {url}");
             return loaded;
         }
-
-        public static void ClearCache() => cache.Clear();
     }
 }

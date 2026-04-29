@@ -12,7 +12,7 @@ v0.1.0 — under development.
 - Per-building character overlays in Mission Control and Tracking Station.
 - KSC notification markers pulled from `KerbalCampaignKit.Notifications`.
 - Condition-driven memo pipeline with optional mirroring to the stock mail system.
-- `DISPOSITION_DECAY` cfg compiles to `CAMPAIGN_TRIGGER`s at load.
+- `DISPOSITION_DECAY` cfg drives in-process flag transitions on KDK's flag store.
 - PR Campaign gameplay action.
 
 ## Activation

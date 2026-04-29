@@ -20,8 +20,6 @@ namespace KerbalAdminKit.Focuses
 
         private static Texture2D opaqueBg;
 
-        public bool IsOpen => target != null;
-
         public FocusPicker(FocusRegistry focuses, CharacterRegistry characters)
         {
             this.focuses = focuses;

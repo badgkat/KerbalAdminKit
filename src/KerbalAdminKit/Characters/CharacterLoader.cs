@@ -21,7 +21,6 @@ namespace KerbalAdminKit.Characters
                 DispositionFlag = node.GetValue("dispositionFlag"),
                 DefaultDisposition = node.GetValue("defaultDisposition") ?? "Neutral",
                 OnClickScene = node.GetValue("onClickScene"),
-                ChipShape = node.GetValue("chipShape") ?? "square",
             };
 
             foreach (var layerNode in node.GetNodes("CHIP_LAYER"))

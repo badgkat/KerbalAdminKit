@@ -9,7 +9,6 @@ namespace KerbalAdminKit.Characters
         public string DisplayName;
         public string Role;
         public ColorValue BaseColor;
-        public string ChipShape = "square";   // reserved for v0.2
 
         public List<ChipLayerSpec> ChipLayers = new List<ChipLayerSpec>();
 

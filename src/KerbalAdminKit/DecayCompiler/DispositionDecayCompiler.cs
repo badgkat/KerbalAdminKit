@@ -2,7 +2,7 @@ namespace KerbalAdminKit.DecayCompiler
 {
     /// <summary>
     /// Pure data: a single "if flag X has value Y for N days, write Z to flag X" rule.
-    /// Consumed at runtime by DispositionDecayTicker (Task 24).
+    /// Consumed at runtime by DispositionDecayTicker.
     /// </summary>
     public sealed class CompiledDecayTrigger
     {
