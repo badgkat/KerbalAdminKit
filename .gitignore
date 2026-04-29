@@ -7,3 +7,7 @@ obj/
 .idea/
 *.swp
 *.tmp
+
+# Demo cfg copied to mod root for live testing (canonical lives in demo/)
+/demo-admin-kit.cfg
+/demo-admin-kit.cfg.off
