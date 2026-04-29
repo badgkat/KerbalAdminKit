@@ -47,7 +47,7 @@ namespace KerbalAdminKit.KscRenderer
 
             foreach (var entry in Buildings)
             {
-                var severity = CampaignKit.Notifications?.Highest(entry.prefix);
+                var severity = ComputeSeverity(entry.facility, entry.prefix);
                 if (!severity.HasValue) continue;
 
                 var style = styles.Get(severity.Value.ToString());
@@ -71,6 +71,26 @@ namespace KerbalAdminKit.KscRenderer
                 GUI.DrawTexture(rect, tex, ScaleMode.ScaleToFit);
                 GUI.color = original;
             }
+        }
+
+        /// <summary>
+        /// Decides what severity (if any) to render over each facility.
+        /// Administration is gated on KAK-side state (active memos) so the
+        /// marker reflects real desk work, not stale or unrelated KCK
+        /// notifications. Other buildings defer to KCK notifications since
+        /// KAK has no per-facility state for them.
+        /// </summary>
+        private KerbalCampaignKit.Notifications.NotificationSeverity? ComputeSeverity(string facility, string prefix)
+        {
+            if (facility == "Administration")
+            {
+                if (AdminKit.Memos == null) return null;
+                foreach (var m in AdminKit.Memos.Active)
+                    return KerbalCampaignKit.Notifications.NotificationSeverity.Action;
+                return null;
+            }
+
+            return CampaignKit.Notifications?.Highest(prefix);
         }
 
         private void EnsureFacilityCache()

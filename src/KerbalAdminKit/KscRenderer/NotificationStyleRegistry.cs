@@ -10,18 +10,21 @@ namespace KerbalAdminKit.KscRenderer
 
         public NotificationStyleRegistry()
         {
+            // Default colors are white because the shipped glyphs are already
+            // colored (red exclamation, yellow dot). Content mods that ship
+            // their own greyscale glyphs can override Color via cfg.
             AddOrReplace(new NotificationStyle
             {
                 Severity = "Action",
                 TextureUrl = "KerbalAdminKit/Art/exclamation",
-                Color = HexColor.Parse("#FFFF4040"),
+                Color = HexColor.Parse("#FFFFFFFF"),
                 Pulse = true,
             });
             AddOrReplace(new NotificationStyle
             {
                 Severity = "Info",
                 TextureUrl = "KerbalAdminKit/Art/dot",
-                Color = HexColor.Parse("#FFFFE066"),
+                Color = HexColor.Parse("#FFFFFFFF"),
                 Pulse = false,
             });
         }
