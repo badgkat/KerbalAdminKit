@@ -1,6 +1,12 @@
 bin/
 obj/
-Plugins/
+
+# Exclude compiled artifacts from source tree (built into Plugins/ by build)
+# But DO ship Plugins/KerbalAdminKit.dll — that's the installed artifact
+Plugins/*
+!Plugins/*.dll
+!Plugins/.gitkeep
+
 *.suo
 *.user
 *.userprefs
