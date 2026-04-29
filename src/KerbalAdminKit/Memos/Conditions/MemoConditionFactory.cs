@@ -25,6 +25,8 @@ namespace KerbalAdminKit.Memos.Conditions
                     return new ReputationBelowCondition { Threshold = D(node, "threshold") };
                 case "InChapter":
                     return new InChapterCondition { Chapter = node.GetValue("chapter") };
+                case "ChapterAtLeast":
+                    return new ChapterAtLeastCondition { Chapter = (int)D(node, "chapter") };
                 case "FlagExpression":
                     return new FlagExpressionCondition { Expression = node.GetValue("expression") };
                 case "TimeSinceEvent":

@@ -51,6 +51,37 @@ namespace KerbalAdminKit.Tests
         }
 
         [Fact]
+        public void ChapterAtLeast_True_WhenCurrentMatches()
+        {
+            var c = new ChapterAtLeastCondition { Chapter = 1 };
+            Assert.True(c.Evaluate(Ctx(chapter: "1")));
+        }
+
+        [Fact]
+        public void ChapterAtLeast_True_WhenCurrentExceeds()
+        {
+            var c = new ChapterAtLeastCondition { Chapter = 1 };
+            Assert.True(c.Evaluate(Ctx(chapter: "2")));
+            Assert.True(c.Evaluate(Ctx(chapter: "5")));
+        }
+
+        [Fact]
+        public void ChapterAtLeast_False_WhenCurrentBelow()
+        {
+            var c = new ChapterAtLeastCondition { Chapter = 2 };
+            Assert.False(c.Evaluate(Ctx(chapter: "1")));
+            Assert.False(c.Evaluate(Ctx(chapter: "0")));
+        }
+
+        [Fact]
+        public void ChapterAtLeast_False_WhenCurrentNullOrUnparseable()
+        {
+            var c = new ChapterAtLeastCondition { Chapter = 1 };
+            Assert.False(c.Evaluate(Ctx(chapter: null)));
+            Assert.False(c.Evaluate(Ctx(chapter: "not-a-number")));
+        }
+
+        [Fact]
         public void FlagExpression_ParsesAndEvaluates()
         {
             var flags = new FlagStore();
