@@ -58,7 +58,11 @@ namespace KerbalAdminKit.Admin
             if (!visible) return;
             if (characterPanel == null) return;
 
-            window = ClickThruBlocker.GUILayoutWindow(
+            // Use GUIWindow (not GUILayoutWindow): DrawWindow positions panels via
+            // absolute Rects + BeginArea, which doesn't propagate height back to
+            // the outer GUILayout flow — GUILayoutWindow would collapse to a tiny
+            // square. GUIWindow honors the explicit rect we pass.
+            window = ClickThruBlocker.GUIWindow(
                 WindowId, window, DrawWindow, "Administration", GUI.skin.window);
 
             focusPicker?.OnGUI();
