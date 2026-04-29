@@ -119,5 +119,107 @@ namespace KerbalAdminKit.Tests
             var c = new TimeSinceEventCondition { EventName = "never_happened", MinDays = 1 };
             Assert.False(c.Evaluate(Ctx(flags: flags, now: 1e9)));
         }
+
+        [Fact]
+        public void All_True_WhenAllChildrenTrue()
+        {
+            var c = new CompositeCondition
+            {
+                Mode = CompositeMode.All,
+                Children =
+                {
+                    new FundsBelowCondition { Threshold = 10000 },
+                    new ReputationAboveCondition { Threshold = 50 },
+                },
+            };
+            Assert.True(c.Evaluate(Ctx(funds: 5000, rep: 100)));
+        }
+
+        [Fact]
+        public void All_False_WhenAnyChildFalse()
+        {
+            var c = new CompositeCondition
+            {
+                Mode = CompositeMode.All,
+                Children =
+                {
+                    new FundsBelowCondition { Threshold = 10000 },
+                    new ReputationAboveCondition { Threshold = 50 },
+                },
+            };
+            Assert.False(c.Evaluate(Ctx(funds: 5000, rep: 10)));
+            Assert.False(c.Evaluate(Ctx(funds: 50000, rep: 100)));
+        }
+
+        [Fact]
+        public void All_True_WhenChildrenEmpty()
+        {
+            var c = new CompositeCondition { Mode = CompositeMode.All };
+            Assert.True(c.Evaluate(Ctx()));
+        }
+
+        [Fact]
+        public void Any_True_WhenAnyChildTrue()
+        {
+            var c = new CompositeCondition
+            {
+                Mode = CompositeMode.Any,
+                Children =
+                {
+                    new FundsBelowCondition { Threshold = 10000 },
+                    new ReputationAboveCondition { Threshold = 50 },
+                },
+            };
+            Assert.True(c.Evaluate(Ctx(funds: 5000, rep: 0)));
+            Assert.True(c.Evaluate(Ctx(funds: 50000, rep: 100)));
+        }
+
+        [Fact]
+        public void Any_False_WhenAllChildrenFalse()
+        {
+            var c = new CompositeCondition
+            {
+                Mode = CompositeMode.Any,
+                Children =
+                {
+                    new FundsBelowCondition { Threshold = 10000 },
+                    new ReputationAboveCondition { Threshold = 50 },
+                },
+            };
+            Assert.False(c.Evaluate(Ctx(funds: 50000, rep: 10)));
+        }
+
+        [Fact]
+        public void Any_False_WhenChildrenEmpty()
+        {
+            var c = new CompositeCondition { Mode = CompositeMode.Any };
+            Assert.False(c.Evaluate(Ctx()));
+        }
+
+        [Fact]
+        public void Composite_Nests()
+        {
+            // ALL { ANY { funds<10k, rep>50 }, chapter>=1 }
+            var c = new CompositeCondition
+            {
+                Mode = CompositeMode.All,
+                Children =
+                {
+                    new CompositeCondition
+                    {
+                        Mode = CompositeMode.Any,
+                        Children =
+                        {
+                            new FundsBelowCondition { Threshold = 10000 },
+                            new ReputationAboveCondition { Threshold = 50 },
+                        },
+                    },
+                    new ChapterAtLeastCondition { Chapter = 1 },
+                },
+            };
+            Assert.True(c.Evaluate(Ctx(funds: 5000, rep: 0, chapter: "1")));
+            Assert.False(c.Evaluate(Ctx(funds: 5000, rep: 0, chapter: "0")));
+            Assert.False(c.Evaluate(Ctx(funds: 50000, rep: 10, chapter: "1")));
+        }
     }
 }
