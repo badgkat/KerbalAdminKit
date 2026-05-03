@@ -18,6 +18,7 @@ namespace KerbalAdminKit.Characters
                 DisplayName = node.GetValue("displayName") ?? id,
                 Role = node.GetValue("role") ?? "",
                 BaseColor = HexColor.Parse(node.GetValue("baseColor")),
+                InstructorModel = node.GetValue("instructorModel"),
                 DispositionFlag = node.GetValue("dispositionFlag"),
                 DefaultDisposition = node.GetValue("defaultDisposition") ?? "Neutral",
                 OnClickScene = node.GetValue("onClickScene"),

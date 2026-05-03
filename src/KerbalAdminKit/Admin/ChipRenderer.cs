@@ -16,6 +16,13 @@ namespace KerbalAdminKit.Admin
         {
             if (info == null) return;
 
+            var portrait = InstructorPortraitRenderer.Get(info.Id);
+            if (portrait != null && (layerOverride == null || layerOverride.Count == 0))
+            {
+                GUI.DrawTexture(chipRect, portrait, ScaleMode.ScaleToFit);
+                return;
+            }
+
             var layers = layerOverride != null && layerOverride.Count > 0
                 ? layerOverride
                 : info.ChipLayers;

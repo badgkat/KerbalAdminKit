@@ -16,6 +16,7 @@ namespace KerbalAdminKit.Tests
                 .Set("displayName", "Wernher von Kerman")
                 .Set("role", "Chief Scientist")
                 .Set("baseColor", "#FF82B4E8")
+                .Set("instructorModel", "Instructor_Wernher")
                 .Set("dispositionFlag", "wernher_disposition")
                 .Set("defaultDisposition", "Supportive")
                 .Set("onClickScene", "wernher_intro");
@@ -26,6 +27,7 @@ namespace KerbalAdminKit.Tests
             Assert.Equal("Wernher von Kerman", c.DisplayName);
             Assert.Equal("Chief Scientist", c.Role);
             Assert.Equal(HexColor.Parse("#FF82B4E8"), c.BaseColor);
+            Assert.Equal("Instructor_Wernher", c.InstructorModel);
             Assert.Equal("wernher_disposition", c.DispositionFlag);
             Assert.Equal("Supportive", c.DefaultDisposition);
             Assert.Equal("wernher_intro", c.OnClickScene);

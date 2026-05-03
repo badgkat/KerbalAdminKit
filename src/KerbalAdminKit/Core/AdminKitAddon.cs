@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
@@ -190,6 +191,8 @@ namespace KerbalAdminKit
 
         private void WireAtSpaceCentre()
         {
+            StartCoroutine(InstructorPortraitRenderer.RenderAll(characters.All));
+
             var ui = AdminBuildingUI.Instance;
             if (ui != null) ui.Initialize(characters, focuses, memos, settings, prConfig);
 

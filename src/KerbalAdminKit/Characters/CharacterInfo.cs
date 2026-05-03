@@ -9,6 +9,7 @@ namespace KerbalAdminKit.Characters
         public string DisplayName;
         public string Role;
         public ColorValue BaseColor;
+        public string InstructorModel;
 
         public List<ChipLayerSpec> ChipLayers = new List<ChipLayerSpec>();
 
